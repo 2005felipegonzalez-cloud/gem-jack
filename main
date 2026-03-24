@@ -1,0 +1,805 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>GemJack — Earn & Play</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;700&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0d0d0f;
+    --bg2: #18181c;
+    --bg3: #222228;
+    --border: rgba(255,255,255,0.08);
+    --border2: rgba(255,255,255,0.15);
+    --text: #f0ede8;
+    --text2: #9c9890;
+    --text3: #5a5854;
+    --gem: #a78bfa;
+    --gem-bg: rgba(167,139,250,0.12);
+    --gold: #f5c542;
+    --gold-bg: rgba(245,197,66,0.1);
+    --green: #4ade80;
+    --green-bg: rgba(74,222,128,0.1);
+    --red: #f87171;
+    --red-bg: rgba(248,113,113,0.1);
+    --amber: #fb923c;
+    --blue: #60a5fa;
+    --blue-bg: rgba(96,165,250,0.1);
+    --radius: 12px;
+    --radius-sm: 8px;
+  }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 1.5rem 1rem 4rem;
+  }
+
+  #app { width: 100%; max-width: 520px; }
+
+  .screen { display: none; }
+  .screen.active { display: block; }
+
+  /* Typography */
+  h1 { font-family: 'Syne', sans-serif; font-size: 32px; font-weight: 700; letter-spacing: -0.02em; color: var(--text); }
+  h2 { font-family: 'Syne', sans-serif; font-size: 18px; font-weight: 700; color: var(--text); margin-bottom: 0.75rem; }
+  p { color: var(--text2); font-size: 14px; line-height: 1.6; }
+
+  /* Cards */
+  .card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+  }
+
+  /* Inputs */
+  input[type=text], input[type=password] {
+    width: 100%;
+    padding: 11px 14px;
+    font-size: 15px;
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text);
+    margin-bottom: 10px;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  input:focus { border-color: var(--gem); }
+  input::placeholder { color: var(--text3); }
+
+  /* Buttons */
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+    padding: 11px 20px; font-size: 14px; font-weight: 500; font-family: 'DM Sans', sans-serif;
+    border-radius: var(--radius-sm); border: 1px solid var(--border2);
+    cursor: pointer; background: var(--bg3); color: var(--text);
+    transition: all 0.15s; width: 100%; margin-bottom: 8px;
+  }
+  .btn:hover { background: #2e2e36; border-color: rgba(255,255,255,0.2); }
+  .btn:active { transform: scale(0.97); }
+  .btn-primary { background: var(--gem); color: #1a0d3d; border-color: var(--gem); font-weight: 700; }
+  .btn-primary:hover { background: #c4b5fd; border-color: #c4b5fd; }
+  .btn-green { background: var(--green); color: #052e16; border-color: var(--green); font-weight: 700; }
+  .btn-green:hover { background: #86efac; }
+  .btn-red { background: var(--red); color: #3b0000; border-color: var(--red); font-weight: 700; }
+  .btn-red:hover { background: #fca5a5; }
+  .btn-sm { padding: 8px 14px; font-size: 13px; width: auto; margin-bottom: 0; }
+  .btn-row { display: flex; gap: 8px; margin-bottom: 8px; }
+
+  /* Badges */
+  .badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 12px; font-weight: 500; }
+  .badge-gem { background: var(--gem-bg); color: var(--gem); }
+  .badge-cash { background: var(--green-bg); color: var(--green); }
+
+  /* Stats row */
+  .stat-row { display: flex; gap: 8px; margin-bottom: 1rem; }
+  .stat {
+    flex: 1; background: var(--bg2); border: 1px solid var(--border);
+    border-radius: var(--radius-sm); padding: 0.75rem; text-align: center;
+  }
+  .stat-label { font-size: 10px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 4px; }
+  .stat-val { font-size: 20px; font-weight: 700; font-family: 'Syne', sans-serif; color: var(--text); }
+  .stat-val.gem { color: var(--gem); }
+  .stat-val.cash { color: var(--green); }
+
+  /* Messages */
+  .err { color: var(--red); font-size: 13px; margin-bottom: 10px; min-height: 18px; }
+  .ok { color: var(--green); font-size: 13px; margin-bottom: 10px; min-height: 18px; }
+
+  /* Nav tabs */
+  .nav {
+    display: flex; gap: 3px; background: var(--bg2);
+    border: 1px solid var(--border); border-radius: var(--radius-sm);
+    padding: 4px; margin-bottom: 1rem;
+  }
+  .nav-btn {
+    flex: 1; padding: 8px 6px; font-size: 12px; font-weight: 500;
+    font-family: 'DM Sans', sans-serif; border: none; border-radius: 6px;
+    cursor: pointer; background: transparent; color: var(--text2); transition: all 0.15s;
+  }
+  .nav-btn.active { background: var(--bg3); color: var(--text); border: 1px solid var(--border2); }
+
+  /* Auth nav */
+  .auth-nav { display: flex; gap: 3px; background: var(--bg3); border-radius: var(--radius-sm); padding: 4px; margin-bottom: 1.25rem; }
+  .auth-btn { flex: 1; padding: 9px; font-size: 14px; font-weight: 500; font-family: 'DM Sans', sans-serif; border: none; border-radius: 6px; cursor: pointer; background: transparent; color: var(--text2); transition: all 0.15s; }
+  .auth-btn.active { background: var(--gem); color: #1a0d3d; font-weight: 700; }
+
+  /* Blackjack cards */
+  .bj-area { display: flex; flex-direction: column; gap: 1.25rem; margin-bottom: 1rem; }
+  .hand-label { font-size: 11px; color: var(--text3); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.07em; }
+  .hand { display: flex; flex-wrap: wrap; gap: 8px; min-height: 96px; align-items: center; }
+
+  .playing-card {
+    width: 62px; height: 90px; border-radius: 8px;
+    background: #f8f4ee; border: 1px solid rgba(0,0,0,0.1);
+    display: flex; flex-direction: column; justify-content: space-between;
+    padding: 6px 8px; font-size: 17px; font-weight: 700; font-family: 'Syne', sans-serif;
+    flex-shrink: 0; box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+  }
+  .playing-card.red { color: #c0392b; }
+  .playing-card.black { color: #1a1a2e; }
+  .playing-card.face-down {
+    background: linear-gradient(135deg, #312e81 0%, #1e1b4b 100%);
+    border: 2px solid rgba(167,139,250,0.3);
+  }
+  .card-suit { font-size: 13px; text-align: right; }
+  .card-bot { transform: rotate(180deg); font-size: 13px; }
+
+  /* BJ result */
+  .bj-result { font-size: 16px; font-weight: 700; font-family: 'Syne', sans-serif; text-align: center; padding: 0.875rem; border-radius: var(--radius-sm); margin: 0.5rem 0; }
+  .bj-win { background: var(--green-bg); color: var(--green); border: 1px solid rgba(74,222,128,0.2); }
+  .bj-lose { background: var(--red-bg); color: var(--red); border: 1px solid rgba(248,113,113,0.2); }
+  .bj-push { background: var(--gold-bg); color: var(--gold); border: 1px solid rgba(245,197,66,0.2); }
+
+  /* Chips */
+  .bet-section { margin-bottom: 1rem; }
+  .bet-amount { font-size: 28px; font-weight: 700; font-family: 'Syne', sans-serif; color: var(--gold); margin-bottom: 0.75rem; }
+  .chips { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 1rem; }
+  .chip {
+    width: 52px; height: 52px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 700; font-family: 'Syne', sans-serif;
+    cursor: pointer; transition: transform 0.15s; user-select: none;
+    border: 3px dashed transparent;
+  }
+  .chip:hover { transform: scale(1.12) translateY(-2px); }
+  .chip:active { transform: scale(0.95); }
+  .chip.c1  { background: #1e3a5f; border-color: var(--blue); color: var(--blue); }
+  .chip.c5  { background: #3b2004; border-color: var(--amber); color: var(--amber); }
+  .chip.c10 { background: #3b0000; border-color: var(--red); color: var(--red); }
+  .chip.c25 { background: #1a0d3d; border-color: var(--gem); color: var(--gem); }
+  .chip.c50 { background: #1a2e0d; border-color: var(--green); color: var(--green); }
+
+  /* Ad watching */
+  .ad-placeholder {
+    background: var(--bg3); border: 1px dashed var(--border2);
+    border-radius: var(--radius-sm); height: 160px;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--text3); font-size: 13px; margin-bottom: 1rem;
+    text-align: center; flex-direction: column; gap: 6px;
+  }
+  .ad-circle {
+    width: 80px; height: 80px; border-radius: 50%;
+    border: 3px solid var(--gem); display: flex; align-items: center;
+    justify-content: center; font-size: 30px; font-weight: 700;
+    font-family: 'Syne', sans-serif; color: var(--gem); margin: 1rem auto;
+    animation: pulse 1s ease-in-out infinite;
+  }
+  @keyframes pulse { 0%,100% { box-shadow: 0 0 0 0 rgba(167,139,250,0.4); } 50% { box-shadow: 0 0 0 12px rgba(167,139,250,0); } }
+
+  /* Leaderboard */
+  .lb-row {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 14px;
+  }
+  .lb-row:last-child { border-bottom: none; }
+  .lb-rank { width: 22px; font-size: 12px; color: var(--text3); font-family: 'Syne', sans-serif; font-weight: 700; }
+  .lb-rank.top { color: var(--gold); }
+
+  /* Header bar */
+  .topbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; padding-bottom: 1rem; border-bottom: 1px solid var(--border); }
+  .username { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 16px; }
+
+  /* Logo area */
+  .logo { text-align: center; padding: 2rem 0 1.5rem; }
+  .logo-icon { font-size: 48px; line-height: 1; margin-bottom: 0.5rem; }
+  .logo-sub { color: var(--text3); font-size: 13px; margin-top: 0.5rem; }
+
+  .divider { border: none; border-top: 1px solid var(--border); margin: 1rem 0; }
+
+  .score-badge {
+    display: inline-block; padding: 2px 8px; border-radius: 4px;
+    background: var(--bg3); border: 1px solid var(--border);
+    font-size: 12px; color: var(--text2); font-family: 'Syne', sans-serif; font-weight: 700;
+  }
+
+  .info-row { display: flex; justify-content: space-between; align-items: center; font-size: 13px; color: var(--text2); margin-bottom: 0.5rem; }
+  .info-val { color: var(--text); font-weight: 500; }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- ===== AUTH SCREEN ===== -->
+  <div id="screen-auth" class="screen active">
+    <div class="logo">
+      <div class="logo-icon">♦</div>
+      <h1>GemJack</h1>
+      <p class="logo-sub">Watch ads · Earn gems · Play blackjack · Cash out</p>
+    </div>
+    <div class="card">
+      <div class="auth-nav">
+        <button class="auth-btn active" id="auth-login-btn" onclick="switchAuth('login')">Sign in</button>
+        <button class="auth-btn" id="auth-reg-btn" onclick="switchAuth('register')">Create account</button>
+      </div>
+      <div id="auth-msg" class="err"></div>
+      <input type="text" id="auth-user" placeholder="Username" autocomplete="username" />
+      <input type="password" id="auth-pass" placeholder="Password" autocomplete="current-password" />
+      <div id="auth-confirm-wrap" style="display:none;">
+        <input type="password" id="auth-confirm" placeholder="Confirm password" autocomplete="new-password" />
+      </div>
+      <button class="btn btn-primary" onclick="doAuth()" id="auth-submit">Sign in</button>
+    </div>
+    <p style="text-align:center; font-size:12px; margin-top:0.5rem; color:var(--text3);">
+      Accounts are stored locally in your browser. Passwords are hashed — never stored in plain text.
+    </p>
+  </div>
+
+  <!-- ===== GAME SCREEN ===== -->
+  <div id="screen-game" class="screen">
+
+    <!-- Top bar -->
+    <div class="topbar">
+      <div>
+        <span class="username" id="game-username"></span>
+        <br><span style="font-size:11px; color:var(--text3);">player</span>
+      </div>
+      <button class="btn btn-sm" onclick="doLogout()">Sign out</button>
+    </div>
+
+    <!-- Stats -->
+    <div class="stat-row">
+      <div class="stat">
+        <div class="stat-label">Gems</div>
+        <div class="stat-val gem" id="stat-gems">0 ♦</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Balance</div>
+        <div class="stat-val cash" id="stat-cash">$0.00</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Ads watched</div>
+        <div class="stat-val" id="stat-ads">0</div>
+      </div>
+    </div>
+
+    <!-- Tab nav -->
+    <div class="nav">
+      <button class="nav-btn active" onclick="showTab('earn')">Earn</button>
+      <button class="nav-btn" onclick="showTab('play')">Blackjack</button>
+      <button class="nav-btn" onclick="showTab('cashout')">Cash out</button>
+      <button class="nav-btn" onclick="showTab('leaderboard')">Rankings</button>
+    </div>
+
+    <!-- ===== EARN TAB ===== -->
+    <div id="tab-earn" class="tab-panel">
+      <div class="card">
+        <h2>Watch an ad, earn gems</h2>
+        <p style="margin-bottom:1rem;">Each ad earns <strong style="color:var(--gem);">20 gems ♦</strong>. Gems are worth <strong style="color:var(--gold);">$0.05 each</strong> when betting.</p>
+
+        <div id="ad-idle">
+          <div class="ad-placeholder">
+            <span style="font-size:28px;">📺</span>
+            <span>Ad space — drop your ad network code here</span>
+            <span style="font-size:11px; color:var(--text3);">(e.g. Google AdSense, AdMob)</span>
+          </div>
+          <button class="btn btn-primary" onclick="startAd()">▶ Watch ad to earn 20 gems</button>
+        </div>
+
+        <div id="ad-watching" style="display:none;">
+          <div class="ad-placeholder" style="border-color:var(--gem); border-style:solid;">
+            <span style="font-size:28px;">📺</span>
+            <span>Ad is playing...</span>
+          </div>
+          <div style="text-align:center; padding: 0.5rem 0 1rem;">
+            <p style="font-size:13px; margin-bottom:4px;">Ad ends in</p>
+            <div class="ad-circle" id="ad-timer">30</div>
+            <p style="font-size:12px; color:var(--text3);">Keep this window open to earn your gems</p>
+          </div>
+        </div>
+
+        <div id="ad-done" style="display:none;">
+          <div class="bj-result bj-win" style="margin-bottom:1rem;">+20 gems earned! ♦</div>
+          <button class="btn btn-primary" onclick="resetAd()">Watch another ad</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>How it works</h2>
+        <div class="info-row"><span>1 ad watched</span><span class="info-val" style="color:var(--gem);">+20 gems ♦</span></div>
+        <div class="info-row"><span>1 gem value</span><span class="info-val" style="color:var(--gold);">$0.05</span></div>
+        <div class="info-row"><span>Minimum cash-out</span><span class="info-val" style="color:var(--green);">$35.00</span></div>
+        <div class="info-row"><span>Gems to reach minimum</span><span class="info-val">700 gems = 35 ads</span></div>
+      </div>
+    </div>
+
+    <!-- ===== BLACKJACK TAB ===== -->
+    <div id="tab-play" class="tab-panel" style="display:none;">
+      <div class="card">
+        <h2>Blackjack</h2>
+
+        <!-- Bet phase -->
+        <div id="bj-bet-phase">
+          <p style="margin-bottom:1rem; font-size:13px;">Chips convert gems at $0.05 each. Get closer to 21 than the dealer to win!</p>
+          <div class="bet-section">
+            <div class="bet-amount">$<span id="bet-display">0.00</span></div>
+            <div class="chips">
+              <div class="chip c1"  onclick="addBet(1)"  title="$1">$1</div>
+              <div class="chip c5"  onclick="addBet(5)"  title="$5">$5</div>
+              <div class="chip c10" onclick="addBet(10)" title="$10">$10</div>
+              <div class="chip c25" onclick="addBet(25)" title="$25">$25</div>
+              <div class="chip c50" onclick="addBet(50)" title="$50">$50</div>
+            </div>
+            <button class="btn btn-sm" onclick="clearBet()" style="width:auto; margin-bottom:0.75rem;">✕ Clear bet</button>
+          </div>
+          <div id="bj-bet-err" class="err"></div>
+          <button class="btn btn-primary" onclick="dealHand()">Deal cards</button>
+        </div>
+
+        <!-- Play phase -->
+        <div id="bj-play-phase" style="display:none;">
+          <div class="bj-area">
+            <div>
+              <div class="hand-label">Dealer <span class="score-badge" id="dealer-score"></span></div>
+              <div class="hand" id="dealer-hand"></div>
+            </div>
+            <hr class="divider" />
+            <div>
+              <div class="hand-label">You <span class="score-badge" id="player-score"></span></div>
+              <div class="hand" id="player-hand"></div>
+            </div>
+          </div>
+          <div id="bj-result-box" style="display:none;"></div>
+          <div class="btn-row" id="bj-action-btns">
+            <button class="btn btn-green btn-sm" onclick="bjHit()">Hit</button>
+            <button class="btn btn-sm" onclick="bjStand()">Stand</button>
+            <button class="btn btn-sm" onclick="bjDouble()" id="btn-double">Double</button>
+          </div>
+          <div id="bj-next-btn" style="display:none; margin-top:0.75rem;">
+            <button class="btn btn-primary" onclick="resetBJ()">Play again</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== CASH OUT TAB ===== -->
+    <div id="tab-cashout" class="tab-panel" style="display:none;">
+      <div class="card">
+        <h2>Cash out</h2>
+        <div class="info-row" style="margin-bottom:1rem;">
+          <span>Your balance</span>
+          <span class="stat-val cash" id="cashout-balance" style="font-size:22px;">$0.00</span>
+        </div>
+        <hr class="divider" />
+
+        <div id="cashout-locked">
+          <div class="bj-result bj-push">Minimum cash-out is $35.00 — keep earning!</div>
+          <p style="font-size:12px; text-align:center; margin-top:0.75rem; color:var(--text3);">Win at blackjack or watch more ads to reach $35.</p>
+        </div>
+
+        <div id="cashout-ready" style="display:none;">
+          <div class="bj-result bj-win" style="margin-bottom:1.25rem;">You're eligible to cash out!</div>
+          <h2 style="margin-bottom:0.75rem;">Payout request</h2>
+          <p style="margin-bottom:1rem; font-size:13px;">Fill in your details below. The game owner will send your payment manually.</p>
+          <input type="text" id="payout-name" placeholder="Full name" />
+          <input type="text" id="payout-paypal" placeholder="PayPal email or Venmo @handle" />
+          <input type="text" id="payout-amount" placeholder="Amount to cash out (e.g. 40.00)" />
+          <div id="payout-msg" class="err"></div>
+          <button class="btn btn-primary" onclick="submitPayout()">Submit payout request</button>
+        </div>
+
+        <div id="cashout-submitted" style="display:none;">
+          <div class="bj-result bj-win">Request submitted! The game owner will process your payout.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== LEADERBOARD TAB ===== -->
+    <div id="tab-leaderboard" class="tab-panel" style="display:none;">
+      <div class="card">
+        <h2>Top players</h2>
+        <div id="lb-list"><p style="color:var(--text3);">Loading...</p></div>
+      </div>
+    </div>
+
+  </div><!-- end screen-game -->
+</div><!-- end app -->
+
+<script>
+/* ==========================================
+   STORAGE — uses localStorage (no server needed)
+   Passwords are hashed with a simple djb2 hash
+   before storing — never stored in plain text.
+   ========================================== */
+const USERS_KEY = 'gemjack_users_v1';
+const SESSION_KEY = 'gemjack_session_v1';
+const GEM_VALUE = 0.05;
+
+function hashPass(p) {
+  let h = 5381;
+  for (let i = 0; i < p.length; i++) h = ((h << 5) + h) ^ p.charCodeAt(i);
+  return (h >>> 0).toString(16);
+}
+
+function loadUsers() {
+  try { return JSON.parse(localStorage.getItem(USERS_KEY) || '{}'); } catch(e) { return {}; }
+}
+
+function saveUsers(u) {
+  localStorage.setItem(USERS_KEY, JSON.stringify(u));
+}
+
+function loadSession() {
+  try { return JSON.parse(sessionStorage.getItem(SESSION_KEY) || 'null'); } catch(e) { return null; }
+}
+
+function saveSession(user) {
+  sessionStorage.setItem(SESSION_KEY, JSON.stringify(user));
+}
+
+/* ==========================================
+   STATE
+   ========================================== */
+let currentUser = null;
+let userData = null;
+let authMode = 'login';
+let adTimerInterval = null;
+
+/* ==========================================
+   AUTH
+   ========================================== */
+function switchAuth(mode) {
+  authMode = mode;
+  document.getElementById('auth-login-btn').classList.toggle('active', mode === 'login');
+  document.getElementById('auth-reg-btn').classList.toggle('active', mode === 'register');
+  document.getElementById('auth-submit').textContent = mode === 'login' ? 'Sign in' : 'Create account';
+  document.getElementById('auth-confirm-wrap').style.display = mode === 'register' ? 'block' : 'none';
+  document.getElementById('auth-msg').textContent = '';
+}
+
+function doAuth() {
+  const user = document.getElementById('auth-user').value.trim();
+  const pass = document.getElementById('auth-pass').value;
+  const msgEl = document.getElementById('auth-msg');
+  msgEl.className = 'err';
+
+  if (!user || !pass) { msgEl.textContent = 'Please fill in all fields.'; return; }
+  if (user.length < 3) { msgEl.textContent = 'Username must be at least 3 characters.'; return; }
+
+  const users = loadUsers();
+  const hashed = hashPass(pass);
+
+  if (authMode === 'register') {
+    const confirm = document.getElementById('auth-confirm').value;
+    if (pass !== confirm) { msgEl.textContent = 'Passwords do not match.'; return; }
+    if (pass.length < 6) { msgEl.textContent = 'Password must be at least 6 characters.'; return; }
+    if (users[user]) { msgEl.textContent = 'Username already taken.'; return; }
+    users[user] = { pass: hashed, gems: 0, cash: 0, ads: 0 };
+    saveUsers(users);
+    msgEl.className = 'ok'; msgEl.textContent = 'Account created! Signing you in...';
+    setTimeout(() => loginUser(user, users[user]), 600);
+  } else {
+    if (!users[user]) { msgEl.textContent = 'Account not found.'; return; }
+    if (users[user].pass !== hashed) { msgEl.textContent = 'Incorrect password.'; return; }
+    loginUser(user, users[user]);
+  }
+}
+
+function loginUser(user, data) {
+  currentUser = user;
+  userData = Object.assign({}, data);
+  saveSession(user);
+  document.getElementById('screen-auth').classList.remove('active');
+  document.getElementById('screen-game').classList.add('active');
+  document.getElementById('game-username').textContent = user;
+  updateStats();
+  showTab('earn');
+}
+
+function doLogout() {
+  currentUser = null; userData = null;
+  sessionStorage.removeItem(SESSION_KEY);
+  document.getElementById('screen-game').classList.remove('active');
+  document.getElementById('screen-auth').classList.add('active');
+  document.getElementById('auth-user').value = '';
+  document.getElementById('auth-pass').value = '';
+  document.getElementById('auth-confirm').value = '';
+  document.getElementById('auth-msg').textContent = '';
+}
+
+function saveCurrentUser() {
+  const users = loadUsers();
+  users[currentUser] = userData;
+  saveUsers(users);
+  updateStats();
+}
+
+function updateStats() {
+  document.getElementById('stat-gems').textContent = (userData.gems || 0) + ' ♦';
+  document.getElementById('stat-cash').textContent = '$' + (userData.cash || 0).toFixed(2);
+  document.getElementById('stat-ads').textContent = userData.ads || 0;
+  document.getElementById('cashout-balance').textContent = '$' + (userData.cash || 0).toFixed(2);
+  const eligible = (userData.cash || 0) >= 35;
+  document.getElementById('cashout-locked').style.display = eligible ? 'none' : 'block';
+  const submitted = document.getElementById('cashout-submitted').style.display === 'block';
+  document.getElementById('cashout-ready').style.display = (eligible && !submitted) ? 'block' : 'none';
+}
+
+/* ==========================================
+   TABS
+   ========================================== */
+function showTab(tab) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.style.display = 'none');
+  const tabs = ['earn', 'play', 'cashout', 'leaderboard'];
+  document.querySelectorAll('#app .nav .nav-btn').forEach((b, i) => b.classList.toggle('active', tabs[i] === tab));
+  document.getElementById('tab-' + tab).style.display = 'block';
+  if (tab === 'cashout') updateStats();
+  if (tab === 'leaderboard') renderLeaderboard();
+}
+
+/* ==========================================
+   AD SYSTEM
+   ========================================== */
+function startAd() {
+  document.getElementById('ad-idle').style.display = 'none';
+  document.getElementById('ad-watching').style.display = 'block';
+  let t = 30;
+  document.getElementById('ad-timer').textContent = t;
+  adTimerInterval = setInterval(() => {
+    t--;
+    document.getElementById('ad-timer').textContent = t;
+    if (t <= 0) {
+      clearInterval(adTimerInterval);
+      document.getElementById('ad-watching').style.display = 'none';
+      document.getElementById('ad-done').style.display = 'block';
+      userData.gems = (userData.gems || 0) + 20;
+      userData.ads = (userData.ads || 0) + 1;
+      saveCurrentUser();
+    }
+  }, 1000);
+}
+
+function resetAd() {
+  document.getElementById('ad-idle').style.display = 'block';
+  document.getElementById('ad-done').style.display = 'none';
+}
+
+/* ==========================================
+   BLACKJACK ENGINE
+   ========================================== */
+const SUITS = ['♠','♣','♥','♦'];
+const RANKS = ['A','2','3','4','5','6','7','8','9','10','J','Q','K'];
+let deck = [], playerHand = [], dealerHand = [], currentBet = 0, betInGems = 0;
+
+function buildDeck() {
+  deck = [];
+  for (const s of SUITS) for (const r of RANKS) deck.push({r, s});
+  for (let i = deck.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [deck[i], deck[j]] = [deck[j], deck[i]];
+  }
+}
+
+function draw() { return deck.pop(); }
+
+function cardVal(c) {
+  if (c.r === 'A') return 11;
+  if (['J','Q','K'].includes(c.r)) return 10;
+  return parseInt(c.r);
+}
+
+function handScore(hand) {
+  let s = 0, aces = 0;
+  for (const c of hand) { s += cardVal(c); if (c.r === 'A') aces++; }
+  while (s > 21 && aces > 0) { s -= 10; aces--; }
+  return s;
+}
+
+function isRed(c) { return c.s === '♥' || c.s === '♦'; }
+
+function renderCard(c, faceDown = false) {
+  if (faceDown) return `<div class="playing-card face-down"></div>`;
+  const col = isRed(c) ? 'red' : 'black';
+  return `<div class="playing-card ${col}">
+    <span>${c.r}</span>
+    <span class="card-suit">${c.s}</span>
+    <span class="card-bot">${c.r}</span>
+  </div>`;
+}
+
+function renderHands(hideDealer2 = true) {
+  document.getElementById('player-hand').innerHTML = playerHand.map(c => renderCard(c)).join('');
+  document.getElementById('dealer-hand').innerHTML = dealerHand.map((c, i) => renderCard(c, i === 1 && hideDealer2)).join('');
+  document.getElementById('player-score').textContent = handScore(playerHand);
+  document.getElementById('dealer-score').textContent = hideDealer2 ? '?' : handScore(dealerHand);
+}
+
+function addBet(amount) {
+  const gems = amount / GEM_VALUE;
+  if (gems + betInGems > (userData.gems || 0)) {
+    document.getElementById('bj-bet-err').textContent = 'Not enough gems — watch more ads!';
+    return;
+  }
+  betInGems += gems;
+  currentBet += amount;
+  document.getElementById('bet-display').textContent = currentBet.toFixed(2);
+  document.getElementById('bj-bet-err').textContent = '';
+}
+
+function clearBet() {
+  currentBet = 0; betInGems = 0;
+  document.getElementById('bet-display').textContent = '0.00';
+  document.getElementById('bj-bet-err').textContent = '';
+}
+
+function dealHand() {
+  if (currentBet <= 0) { document.getElementById('bj-bet-err').textContent = 'Place a bet first!'; return; }
+  buildDeck();
+  playerHand = [draw(), draw()];
+  dealerHand = [draw(), draw()];
+  userData.gems -= betInGems;
+  saveCurrentUser();
+  document.getElementById('bj-bet-phase').style.display = 'none';
+  document.getElementById('bj-play-phase').style.display = 'block';
+  document.getElementById('bj-result-box').style.display = 'none';
+  document.getElementById('bj-action-btns').style.display = 'flex';
+  document.getElementById('bj-next-btn').style.display = 'none';
+  document.getElementById('btn-double').disabled = false;
+  renderHands(true);
+  if (handScore(playerHand) === 21) setTimeout(endHand, 500);
+}
+
+function bjHit() {
+  playerHand.push(draw());
+  document.getElementById('btn-double').disabled = true;
+  renderHands(true);
+  if (handScore(playerHand) >= 21) endHand();
+}
+
+function bjStand() { runDealer(); }
+
+function bjDouble() {
+  if (betInGems * 2 > (userData.gems || 0) + betInGems) return;
+  userData.gems -= betInGems;
+  currentBet *= 2; betInGems *= 2;
+  saveCurrentUser();
+  playerHand.push(draw());
+  renderHands(true);
+  runDealer();
+}
+
+function runDealer() {
+  renderHands(false);
+  let ds = handScore(dealerHand);
+  while (ds < 17) { dealerHand.push(draw()); ds = handScore(dealerHand); }
+  renderHands(false);
+  setTimeout(endHand, 300);
+}
+
+function endHand() {
+  renderHands(false);
+  const ps = handScore(playerHand);
+  const ds = handScore(dealerHand);
+  const pBJ = ps === 21 && playerHand.length === 2;
+  const dBJ = ds === 21 && dealerHand.length === 2;
+  let msg = '', cls = '', win = 0;
+
+  if (ps > 21) { msg = 'Bust! You lose.'; cls = 'bj-lose'; }
+  else if (ds > 21) { msg = 'Dealer busts — you win!'; cls = 'bj-win'; win = currentBet * 2; }
+  else if (pBJ && !dBJ) { msg = 'Blackjack! You win 1.5×!'; cls = 'bj-win'; win = currentBet * 2.5; }
+  else if (dBJ && !pBJ) { msg = 'Dealer blackjack. You lose.'; cls = 'bj-lose'; }
+  else if (ps > ds) { msg = 'You win!'; cls = 'bj-win'; win = currentBet * 2; }
+  else if (ds > ps) { msg = 'Dealer wins.'; cls = 'bj-lose'; }
+  else { msg = 'Push — bet returned.'; cls = 'bj-push'; win = currentBet; }
+
+  if (win > 0) {
+    userData.cash = (userData.cash || 0) + win;
+    msg += '  +$' + win.toFixed(2);
+  }
+  saveCurrentUser();
+
+  const rb = document.getElementById('bj-result-box');
+  rb.innerHTML = `<div class="bj-result ${cls}">${msg}</div>`;
+  rb.style.display = 'block';
+  document.getElementById('bj-action-btns').style.display = 'none';
+  document.getElementById('bj-next-btn').style.display = 'block';
+}
+
+function resetBJ() {
+  clearBet();
+  document.getElementById('bj-bet-phase').style.display = 'block';
+  document.getElementById('bj-play-phase').style.display = 'none';
+  document.getElementById('player-hand').innerHTML = '';
+  document.getElementById('dealer-hand').innerHTML = '';
+}
+
+/* ==========================================
+   CASH OUT
+   ========================================== */
+function submitPayout() {
+  const name = document.getElementById('payout-name').value.trim();
+  const paypal = document.getElementById('payout-paypal').value.trim();
+  const amtStr = document.getElementById('payout-amount').value.trim();
+  const amt = parseFloat(amtStr);
+  const msgEl = document.getElementById('payout-msg');
+  msgEl.className = 'err';
+
+  if (!name || !paypal || !amtStr) { msgEl.textContent = 'Please fill in all fields.'; return; }
+  if (isNaN(amt) || amt < 35) { msgEl.textContent = 'Minimum cash-out is $35.00.'; return; }
+  if (amt > (userData.cash || 0)) { msgEl.textContent = 'Amount exceeds your balance.'; return; }
+
+  userData.cash = +(userData.cash - amt).toFixed(2);
+  saveCurrentUser();
+  document.getElementById('cashout-ready').style.display = 'none';
+  document.getElementById('cashout-submitted').style.display = 'block';
+}
+
+/* ==========================================
+   LEADERBOARD
+   ========================================== */
+function renderLeaderboard() {
+  const users = loadUsers();
+  const lb = Object.entries(users)
+    .map(([name, d]) => ({ name, cash: d.cash || 0, gems: d.gems || 0, ads: d.ads || 0 }))
+    .sort((a, b) => b.cash - a.cash);
+
+  const el = document.getElementById('lb-list');
+  if (!lb.length) { el.innerHTML = '<p style="color:var(--text3);">No players yet — be the first!</p>'; return; }
+
+  el.innerHTML = lb.slice(0, 10).map((p, i) => {
+    const isMe = p.name === currentUser;
+    const rankClass = i < 3 ? 'lb-rank top' : 'lb-rank';
+    const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : (i + 1) + '.';
+    return `<div class="lb-row">
+      <span class="${rankClass}">${medal}</span>
+      <span style="flex:1; color:${isMe ? 'var(--gem)' : 'var(--text)'}; font-weight:${isMe ? '700' : '400'}">
+        ${p.name}${isMe ? ' (you)' : ''}
+      </span>
+      <span class="badge badge-gem" style="margin-right:6px;">${p.gems} ♦</span>
+      <span class="badge badge-cash">$${p.cash.toFixed(2)}</span>
+    </div>`;
+  }).join('');
+}
+
+/* ==========================================
+   INIT — restore session if exists
+   ========================================== */
+(function init() {
+  const savedUser = loadSession();
+  if (savedUser) {
+    const users = loadUsers();
+    if (users[savedUser]) loginUser(savedUser, users[savedUser]);
+  }
+
+  // Enter key on auth inputs
+  ['auth-user','auth-pass','auth-confirm'].forEach(id => {
+    document.getElementById(id).addEventListener('keydown', e => {
+      if (e.key === 'Enter') doAuth();
+    });
+  });
+})();
+</script>
+</body>
+</html>
